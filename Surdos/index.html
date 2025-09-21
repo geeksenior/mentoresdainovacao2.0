@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Libras - Adivinhe os Sinais</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .hand-animation {
+            animation: wave 2s infinite;
+            transform-origin: 70% 70%;
+        }
+        
+        @keyframes wave {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(14deg); }
+            20% { transform: rotate(-8deg); }
+            30% { transform: rotate(14deg); }
+            40% { transform: rotate(-4deg); }
+            50% { transform: rotate(10deg); }
+            60% { transform: rotate(0deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        .option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+        
+        .correct {
+            background-color: #4ade80 !important;
+        }
+        
+        .incorrect {
+            background-color: #f87171 !important;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-purple-50 min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+    <div class="max-w-2xl w-full bg-white rounded-2xl shadow-xl overflow-hidden transition-all duration-300">
+        <!-- Header -->
+        <div class="bg-blue-600 p-6 text-white text-center relative">
+            <h1 class="text-3xl font-bold mb-2">Adivinhe o Sinal em Libras</h1>
+            <p class="text-blue-100">Teste seus conhecimentos sobre Língua Brasileira de Sinais</p>
+            <div class="absolute top-4 right-4 text-yellow-300 text-2xl">
+                <i class="fas fa-hands"></i>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="h-2 bg-gray-200">
+            <div id="progress" class="h-full bg-blue-500 progress-bar" style="width: 0%"></div>
+        </div>
+        
+        <!-- Game Area -->
+        <div class="p-6 md:p-8">
+            <!-- Question Counter -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-gray-500 font-medium">
+                    Pergunta <span id="current-question">1</span>/5
+                </div>
+                <div class="flex items-center">
+                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                    <span id="score">0</span> pontos
+                </div>
+            </div>
+            
+            <!-- Question -->
+            <div id="question-container" class="mb-8 text-center">
+                <h2 id="question" class="text-2xl font-bold text-gray-800 mb-6">Qual é o sinal em Libras para:</h2>
+                
+                <!-- Image/Video Placeholder -->
+                <div class="bg-gray-100 rounded-xl p-4 mb-6 flex justify-center items-center h-48">
+                    <div id="sign-container" class="text-6xl hand-animation">
+                        <i class="fas fa-hands-helping"></i>
+                    </div>
+                </div>
+                
+                <!-- Options -->
+                <div id="options" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <!-- Options will be inserted here by JavaScript -->
+                </div>
+            </div>
+            
+            <!-- Results (initially hidden) -->
+            <div id="results-container" class="hidden text-center py-8">
+                <div class="text-6xl mb-6">
+                    <i class="fas fa-hands-bubbles text-blue-500"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-gray-800 mb-4">Resultado Final</h2>
+                <p class="text-xl mb-6">Você acertou <span id="correct-answers" class="font-bold text-blue-600">0</span> de 5 perguntas!</p>
+                <div class="mb-8">
+                    <div class="h-4 bg-gray-200 rounded-full overflow-hidden">
+                        <div id="final-progress" class="h-full bg-blue-500" style="width: 0%"></div>
+                    </div>
+                </div>
+                <button id="restart-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-redo mr-2"></i> Jogar Novamente
+                </button>
+            </div>
+            
+            <!-- Next Button (initially hidden) -->
+            <div class="text-center mt-4">
+                <button id="next-btn" class="hidden bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-full transition-all duration-300 transform hover:scale-105">
+                    Próxima Pergunta <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-6 text-gray-500 text-sm text-center">
+        <p>Jogo educativo sobre Língua Brasileira de Sinais (Libras)</p>
+    </div>
+
+    <script>
+        // Game data
+        const questions = [
+            {
+                question: "Qual é o sinal em Libras para 'AMOR'?",
+                options: [
+                    { text: "Mãos cruzadas sobre o peito", correct: true },
+                    { text: "Mão batendo no queixo", correct: false },
+                    { text: "Dedo indicador apontando para frente", correct: false },
+                    { text: "Mãos abertas balançando", correct: false }
+                ],
+                sign: "❤️"
+            },
+            {
+                question: "Qual é o sinal em Libras para 'CASA'?",
+                options: [
+                    { text: "Mãos em formato de telhado", correct: true },
+                    { text: "Mão batendo na testa", correct: false },
+                    { text: "Dedo indicador girando", correct: false },
+                    { text: "Mãos batendo palmas", correct: false }
+                ],
+                sign: "🏠"
+            },
+            {
+                question: "Qual é o sinal em Libras para 'ÁGUA'?",
+                options: [
+                    { text: "Mão em formato de 'W' mexendo", correct: true },
+                    { text: "Mão batendo no peito", correct: false },
+                    { text: "Dedo indicador apontando para baixo", correct: false },
+                    { text: "Mãos se afastando", correct: false }
+                ],
+                sign: "💧"
+            },
+            {
+                question: "Qual é o sinal em Libras para 'ESCOLA'?",
+                options: [
+                    { text: "Mãos batendo como se fossem livros", correct: true },
+                    { text: "Mão batendo na cabeça", correct: false },
+                    { text: "Dedo indicador desenhando um quadrado", correct: false },
+                    { text: "Mãos se cruzando", correct: false }
+                ],
+                sign: "📚"
+            },
+            {
+                question: "Qual é o sinal em Libras para 'FAMÍLIA'?",
+                options: [
+                    { text: "Mãos em formato de 'F' circulando", correct: true },
+                    { text: "Mãos batendo uma na outra", correct: false },
+                    { text: "Dedo indicador apontando para os lados", correct: false },
+                    { text: "Mãos sobre os ombros", correct: false }
+                ],
+                sign: "👨‍👩‍👧‍👦"
+            }
+        ];
+
+        // Game state
+        let currentQuestion = 0;
+        let score = 0;
+        let answered = false;
+
+        // DOM elements
+        const questionElement = document.getElementById('question');
+        const optionsElement = document.getElementById('options');
+        const signContainer = document.getElementById('sign-container');
+        const currentQuestionElement = document.getElementById('current-question');
+        const scoreElement = document.getElementById('score');
+        const progressElement = document.getElementById('progress');
+        const nextButton = document.getElementById('next-btn');
+        const resultsContainer = document.getElementById('results-container');
+        const questionContainer = document.getElementById('question-container');
+        const correctAnswersElement = document.getElementById('correct-answers');
+        const finalProgressElement = document.getElementById('final-progress');
+        const restartButton = document.getElementById('restart-btn');
+
+        // Initialize the game
+        function startGame() {
+            currentQuestion = 0;
+            score = 0;
+            showQuestion();
+        }
+
+        // Show current question
+        function showQuestion() {
+            answered = false;
+            const question = questions[currentQuestion];
+            
+            // Update question counter
+            currentQuestionElement.textContent = currentQuestion + 1;
+            
+            // Update progress bar
+            progressElement.style.width = `${(currentQuestion / questions.length) * 100}%`;
+            
+            // Set question text
+            questionElement.textContent = question.question;
+            
+            // Set sign (in a real app, this would be an image/video)
+            signContainer.innerHTML = `<span class="text-6xl">${question.sign}</span>`;
+            
+            // Clear previous options
+            optionsElement.innerHTML = '';
+            
+            // Add new options
+            question.options.forEach(option => {
+                const button = document.createElement('button');
+                button.className = 'bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-4 rounded-lg transition-all duration-300 option';
+                button.textContent = option.text;
+                
+                button.addEventListener('click', () => selectOption(option.correct, button));
+                
+                optionsElement.appendChild(button);
+            });
+            
+            // Hide next button
+            nextButton.classList.add('hidden');
+        }
+
+        // Handle option selection
+        function selectOption(isCorrect, button) {
+            if (answered) return;
+            answered = true;
+            
+            if (isCorrect) {
+                button.classList.add('correct');
+                score++;
+                scoreElement.textContent = score;
+            } else {
+                button.classList.add('incorrect');
+                // Highlight correct answer
+                const buttons = optionsElement.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    if (btn.textContent === questions[currentQuestion].options.find(opt => opt.correct).text) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            // Show next button or finish game
+            if (currentQuestion < questions.length - 1) {
+                nextButton.classList.remove('hidden');
+            } else {
+                setTimeout(showResults, 1500);
+            }
+        }
+
+        // Show next question
+        function nextQuestion() {
+            currentQuestion++;
+            showQuestion();
+        }
+
+        // Show final results
+        function showResults() {
+            questionContainer.classList.add('hidden');
+            resultsContainer.classList.remove('hidden');
+            
+            correctAnswersElement.textContent = score;
+            finalProgressElement.style.width = `${(score / questions.length) * 100}%`;
+        }
+
+        // Restart game
+        function restartGame() {
+            resultsContainer.classList.add('hidden');
+            questionContainer.classList.remove('hidden');
+            startGame();
+        }
+
+        // Event listeners
+        nextButton.addEventListener('click', nextQuestion);
+        restartButton.addEventListener('click', restartGame);
+
+        // Start the game
+        startGame();
+    </script>
+</body>
+</html>
